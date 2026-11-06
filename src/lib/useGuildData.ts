@@ -4,6 +4,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppData } from './types';
 
 type Snapshot = { data: AppData; revision: number };
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
+const apiUrl = (path: string) => `${API_BASE_URL}${path}`;
+
 export function useGuildData() {
   const [data, setData] = useState<AppData | null>(null);
   const [error, setError] = useState('');
@@ -18,7 +21,7 @@ export function useGuildData() {
   }, []);
   const refresh = useCallback(async (signal?: AbortSignal) => {
     try {
-      const response = await fetch('/api/state', { cache: 'no-store', signal });
+      const response = await fetch(apiUrl('/api/state'), { cache: 'no-store', signal });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
       accept(result);
@@ -42,7 +45,7 @@ export function useGuildData() {
     submitting.current = true;
     setPending(true);
     try {
-      const response = await fetch('/api/state', {
+      const response = await fetch(apiUrl('/api/state'), {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...command, roundId: data.rounds[data.rounds.length - 1].id }),
       });

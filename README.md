@@ -64,6 +64,32 @@ docker compose start web
 
 ใช้ชื่อโฟลเดอร์สำรองใหม่ในแต่ละครั้ง หากต้องการกู้คืน ให้ใช้สำเนาทั้งชุดจากการสำรองครั้งเดียวกันแทนไฟล์ใน volume ขณะเว็บหยุดทำงาน
 
+## ให้หน้า `/queue` บน Vercel เรียกฐานข้อมูลในเครื่อง
+
+หน้า Vercel จะเรียก API จาก Docker ผ่าน Cloudflare Tunnel โดยไม่เปิดไฟล์ SQLite หรือพอร์ตฐานข้อมูลโดยตรง
+
+1. ตั้งค่า origin ของ Vercel ใน `.env` ของเครื่อง:
+
+```dotenv
+ALLOWED_ORIGIN=https://xviiicrown.vercel.app
+```
+
+2. เปิด Docker แล้วสร้าง Tunnel ไปยังเว็บ local:
+
+```bash
+cloudflared tunnel --url http://127.0.0.1:3100
+```
+
+3. ใน Vercel Project Settings → Environment Variables ตั้งค่า:
+
+```dotenv
+NEXT_PUBLIC_API_URL=https://<ชื่อ-tunnel>.trycloudflare.com
+```
+
+จากนั้น redeploy โปรเจกต์ หน้า `/queue` จะเรียก `/api/state` และบันทึกข้อมูลลง SQLite ใน Docker เครื่องนี้
+
+Quick Tunnel จะเปลี่ยน URL เมื่อหยุดหรือเปิดใหม่ และเครื่องต้องเปิด Docker กับ `cloudflared` ตลอดเวลาที่ต้องการรับคิว หากใช้งานจริงควรสร้าง Named Tunnel และเพิ่ม authentication ให้ API
+
 ## ขอบเขตการใช้งาน
 
 Compose เปิดพอร์ตเฉพาะ `127.0.0.1` สำหรับเครื่องนี้ ยังไม่มีระบบล็อกอินหรือสิทธิ์แอดมิน ผู้ที่เปิดเว็บได้สามารถเลือกสมาชิกและใช้หน้าจัดการได้ การแยก `/queue` กับ `/admin` เป็นการแยกหน้าการใช้งาน หากจะเปิดให้คนอื่นเข้าผ่าน LAN หรืออินเทอร์เน็ต ต้องเพิ่มการยืนยันตัวตนและตรวจสิทธิ์ที่ API ก่อน
