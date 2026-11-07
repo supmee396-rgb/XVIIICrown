@@ -5,6 +5,7 @@ services:
       - "127.0.0.1:${PORT:-3000}:3000"
     environment:
       DATABASE_PATH: /app/data/guild-queue.sqlite
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-}
     volumes:
       - queue-data:/app/data
     restart: unless-stopped
